@@ -8,7 +8,7 @@ namespace EventStore.infrastructure.EventStores
     {
         void CreateNewStream(string streamName, IEnumerable<DomainEvent> domainEvents);
         void AppendEventsToStream(string streamName, IEnumerable<DomainEvent>domainEvents, Option<int> expectedVersion);
-        IEnumerable<DomainEvent> GetStream(string streamName, int fromVersion, int toVersion);
+        Option<List<EventWrapper>> GetStream(string streamName, int fromVersion, int toVersion);
         void AddSnapshot<T>(string streamName, T snapshot);
         Option<T> GetLatestSnapshot<T>(string streamName) where T : class;
     }

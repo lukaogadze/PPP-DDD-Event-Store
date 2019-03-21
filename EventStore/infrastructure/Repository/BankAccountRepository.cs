@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using EventStore.Domain.BankAccount;
 using EventStore.Domain.Events;
@@ -17,7 +18,7 @@ namespace EventStore.infrastructure.Repository
         }
         
         
-        public Option<BankAccount> FindBy(Guid id)
+        public BankAccount FindBy(Guid id)
         {
             var streamName = StreamFor(id);
 
@@ -30,24 +31,28 @@ namespace EventStore.infrastructure.Repository
                 fromEventNumber = snapshot.Value.Version + 1;
             }
 
-            var eventStream = _eventStore.GetStream(streamName, fromEventNumber, toEventNumber);
+            Option<List<EventWrapper>> eventWrappers = _eventStore.GetStream(streamName, fromEventNumber, toEventNumber);
+            var lastStoredEventNumber = eventWrappers.IsNone ? 0 : eventWrappers.Value[eventWrappers.Value.Count - 1].EventNumber;
 
             BankAccount bankAccount = null;
             if (snapshot.IsSome)
             {
-                bankAccount = new BankAccount(snapshot.Value, null);
+                bankAccount = new BankAccount(snapshot.Value, lastStoredEventNumber);
             }
             else
             {
-                bankAccount = new BankAccount(id);
+                bankAccount = new BankAccount(id, lastStoredEventNumber);
             }
 
-            foreach (DomainEvent @event in eventStream)
+            if (eventWrappers.IsSome)
             {
-                bankAccount.Apply(@event);
+                foreach (DomainEvent @event in eventWrappers.Value.Select(x => x.Event))
+                {
+                    bankAccount.Apply(@event);
+                }
             }
-            
-            return Option.Some(bankAccount);
+
+            return bankAccount;
         }
         
         
@@ -62,7 +67,7 @@ namespace EventStore.infrastructure.Repository
         {
             var streamName = StreamFor(bankAccount.Id);
 
-            var expectedVersion = GetExpectedVersion(bankAccount.InitialVersion);
+            var expectedVersion = GetExpectedVersion(bankAccount.LastStoredEventNumber);
             _eventStore.AppendEventsToStream(streamName, bankAccount.Changes, expectedVersion);   
         }
         

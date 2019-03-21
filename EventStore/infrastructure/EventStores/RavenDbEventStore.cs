@@ -61,7 +61,7 @@ namespace EventStore.infrastructure.EventStores
             return Option.Some(lastSnapshotWrapper.Snapshot as T);
         }
 
-        public IEnumerable<DomainEvent> GetStream(string streamName, int fromVersion, int toVersion)
+        public Option<List<EventWrapper>> GetStream(string streamName, int fromVersion, int toVersion)
         {
             var eventWrappers = _documentSession.Query<EventWrapper>()
                 .Customize(x => x.WaitForNonStaleResults())
@@ -73,19 +73,10 @@ namespace EventStore.infrastructure.EventStores
 
             if (eventWrappers.Count == 0)
             {
-                return new List<DomainEvent>();
+                return Option.None<List<EventWrapper>>();
             }
             
-
-            var events = new List<DomainEvent>(eventWrappers.Count);
-            var lastSavedEventNumber = eventWrappers.Last();
-
-            foreach (var eventWrapper in eventWrappers)
-            {
-                events.Add(eventWrapper.Event);
-            }
-
-            return events;
+            return Option.Some(eventWrappers);
         }
 
         private static void CheckForConcurrencyError(int expectedVersion, EventStream stream)

@@ -7,16 +7,21 @@ namespace EventStore.Domain.BankAccount
     public class BankAccount : EventSourcedAggregate
     {
         public Balance Balance { get; private set; }
-        public int InitialVersion { get; private set; }
-        public BankAccount(Guid id) : base(id)
+        public int LastStoredEventNumber { get; }
+        public BankAccount(Guid id, int lastStoredEventNumber) : base(id)
         {
             Balance = Balance.Empty;
+            LastStoredEventNumber = lastStoredEventNumber;
         }
 
-        public BankAccount(BankAccountSnapshot snapshot, int initialVersion) :base(snapshot.AggregateId)
+        public BankAccount(Guid id): this(id, 0)
+        {
+        }
+
+        public BankAccount(BankAccountSnapshot snapshot, int lastStoredEventNumber) :base(snapshot.AggregateId)
         {
             Version = snapshot.Version;
-            InitialVersion = initialVersion;
+            LastStoredEventNumber = lastStoredEventNumber;
             Balance = Balance.Create(snapshot.Balance);
         }
 

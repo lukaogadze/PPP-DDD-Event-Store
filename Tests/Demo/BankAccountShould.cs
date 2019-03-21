@@ -14,7 +14,7 @@ namespace Tests.Demo
         [Test]
         public void Get_Data_From_DB()
         {
-            var guid = Guid.Parse("1cb52370-b00a-4a03-a7af-bec1e93e0476");
+            var guid = Guid.Parse("f63469c1-9caa-4a17-b7f5-3c8248193de9");
             
             using (var store = new DocumentStore
             {
@@ -28,7 +28,7 @@ namespace Tests.Demo
                     IEventStore eventStore = new RavenDbEventStore(session);
                     var repository = new BankAccountRepository(eventStore);
 
-                    var bankAccount = repository.FindBy(guid).Value;
+                    var bankAccount = repository.FindBy(guid);
                 }
             }
         }
@@ -38,11 +38,7 @@ namespace Tests.Demo
         [Test]
         public void DoWork()
         {
-            var guid = Guid.NewGuid();
-            var bankAccount = new BankAccount(guid);
-            bankAccount.Deposit(new Money(100m));
-            bankAccount.Deposit(new Money(150m));
-            bankAccount.Withdraw(new Money(100m));
+            var guid = Guid.Parse("f63469c1-9caa-4a17-b7f5-3c8248193de9");
 
             using (var store = new DocumentStore
             {
@@ -55,7 +51,14 @@ namespace Tests.Demo
                 {
                     IEventStore eventStore = new RavenDbEventStore(session);
                     var repository = new BankAccountRepository(eventStore);
-                    repository.Add(bankAccount);
+                    var bankAccount = repository.FindBy(guid);
+
+                    repository.SaveSnapshot(bankAccount.Snapshot(), bankAccount);
+
+                    bankAccount.Deposit(new Money(200m));
+                    repository.Save(bankAccount);
+
+
                     session.SaveChanges();
 
 
