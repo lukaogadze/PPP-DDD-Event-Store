@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
-namespace EventStore
+namespace EventStore.infrastructure.EventStores
 {
     [Serializable]
     public class OptimsticConcurrencyException : Exception

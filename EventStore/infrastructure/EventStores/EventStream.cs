@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using EventStore.Domain.Events;
 
-namespace EventStore
+namespace EventStore.infrastructure.EventStores
 {
     public class EventStream
     {

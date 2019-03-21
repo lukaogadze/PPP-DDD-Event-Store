@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace EventStore
+namespace EventStore.infrastructure.EventStores
 {
     public class SnapshotWrapper
     {

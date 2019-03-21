@@ -1,4 +1,6 @@
-﻿namespace EventStore
+﻿using EventStore.Domain.Events;
+
+namespace EventStore.infrastructure.EventStores
 {
     public class EventWrapper
     {
@@ -11,7 +13,7 @@
             Event = @event;
             EventNumber = eventNumber;
             EventStreamId = streamStateId;
-            Id = string.Format("{0}-{1}", streamStateId, EventNumber);
+            Id = $"{streamStateId}-{EventNumber}";
         }
     }
 }

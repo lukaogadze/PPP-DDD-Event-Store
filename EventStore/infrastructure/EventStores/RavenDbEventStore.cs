@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using EventStore.Domain.Events;
 using Raven.Client.Documents.Session;
 using Shared;
 
-namespace EventStore
+namespace EventStore.infrastructure.EventStores
 {
-    public class EventStore : IEventStore
+    public class RavenDbEventStore : IEventStore
     {
         private readonly IDocumentSession _documentSession;
-        public EventStore(IDocumentSession documentSession)
+        public RavenDbEventStore(IDocumentSession documentSession)
         {
             _documentSession = documentSession;
         }
@@ -62,7 +61,7 @@ namespace EventStore
             return Option.Some(lastSnapshotWrapper.Snapshot as T);
         }
 
-        public Option<IEnumerable<DomainEvent>> GetStream(string streamName, int fromVersion, int toVersion)
+        public IEnumerable<DomainEvent> GetStream(string streamName, int fromVersion, int toVersion)
         {
             var eventWrappers = _documentSession.Query<EventWrapper>()
                 .Customize(x => x.WaitForNonStaleResults())
@@ -74,17 +73,19 @@ namespace EventStore
 
             if (eventWrappers.Count == 0)
             {
-                return Option.None<IEnumerable<DomainEvent>>();
+                return new List<DomainEvent>();
             }
+            
 
             var events = new List<DomainEvent>(eventWrappers.Count);
+            var lastSavedEventNumber = eventWrappers.Last();
 
             foreach (var eventWrapper in eventWrappers)
             {
                 events.Add(eventWrapper.Event);
             }
 
-            return Option.Some<IEnumerable<DomainEvent>>(events);
+            return events;
         }
 
         private static void CheckForConcurrencyError(int expectedVersion, EventStream stream)
@@ -92,7 +93,7 @@ namespace EventStore
             var lastUpdatedVersion = stream.Version;
             if (lastUpdatedVersion != expectedVersion)
             {
-                var error = string.Format("Expected: {0}. Found: {1}", expectedVersion, lastUpdatedVersion);
+                var error = $"Expected: {expectedVersion}. Found: {lastUpdatedVersion}";
                 throw new OptimsticConcurrencyException(error);
             }
         }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EventStore
+namespace EventStore.Domain.Events
 {
     public abstract class DomainEvent
     {
